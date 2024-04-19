@@ -1,0 +1,1 @@
+# React Canvas Magnifier

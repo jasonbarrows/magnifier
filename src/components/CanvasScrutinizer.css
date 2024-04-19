@@ -1,0 +1,15 @@
+.container {
+    position: relative;
+    width: 100%;
+}
+  
+.canvas_original,
+.canvas_magnification {
+    width: 100%;
+}
+
+.canvas_magnification {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
