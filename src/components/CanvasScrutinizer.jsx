@@ -11,7 +11,7 @@ const CanvasScrutinizer = () => {
   const magnification = useRef(5); //2.04,
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [container, setContainer] = useState({ width: 0, height: 0 });
-  const [radius, setRadius] = useState(32);
+  const [radius, setRadius] = useState(30);
 
   useEffect(() => {
     ctx.current = canvasOrig.current.getContext('2d');
@@ -57,24 +57,8 @@ const CanvasScrutinizer = () => {
     setPosition({ x: ctx.current.canvas.width / 2, y: ctx.current.canvas.height / 2 });
   };
 
-  const updateCrossHairs = (delta) => {
-    // const xPos = position.x + delta.x
-
-    // let xPos = position.x + delta.x;
-    // let yPos = position.y + delta.y;
-
-
-    // if (xPos > container.width) xPos = container.width;
-    // if (xPos < 0) xPos = 0;
-    // xPos = xPos > container.width ? container.width : xPos
-    // xPos = xPos > container.width ? container.width : xPos
-
-    // if (xPos >= 0 && xPos <= container.width && yPos >= 0 && yPos <= container.height) {
-
-    // if (xPos >= 0 && xPos <= container.width) {
-      // setPosition({ x: xPos, y: yPos });
-      setPosition((curr) => ({ x: curr.x + delta.x, y: curr.y + delta.y }));
-    // }
+  const updateCrossHairs = (newPosition) => {
+    setPosition(newPosition);
   };
 
   const drawMagnified = () => {
