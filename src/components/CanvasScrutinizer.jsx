@@ -3,6 +3,8 @@ import CrossHairs from './CrossHairs';
 import hazel from '../assets/image.jpg';
 import './CanvasScrutinizer.css';
 
+const ratio = window.devicePixelRatio;
+
 const CanvasScrutinizer = () => {
   const canvasOrig = useRef(null);
   const canvasMag = useRef(null);
@@ -12,6 +14,7 @@ const CanvasScrutinizer = () => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [container, setContainer] = useState({ width: 0, height: 0 });
   const [radius, setRadius] = useState(30);
+  const [selecting, setSelecting] = useState(true);
 
   useEffect(() => {
     ctx.current = canvasOrig.current.getContext('2d');
@@ -41,22 +44,26 @@ const CanvasScrutinizer = () => {
     let w = image.naturalWidth;
     let h = image.naturalHeight;
 
-    ctx.current.canvas.width = w;
-    ctx.current.canvas.height = h;
+    canvasOrig.current.style.width = `${w}px`;
+    canvasOrig.current.style.height = `${h}px`;
+    canvasMag.current.style.width = `${w}px`;
+    canvasMag.current.style.height = `${h}px`;
 
-    ctx2.current.canvas.width = w;
-    ctx2.current.canvas.height = h;
-    ctx2.current.lineWidth = 28;
+    ctx.current.canvas.width = w * ratio;
+    ctx.current.canvas.height = h * ratio;
 
-    setContainer({ width: w, height: h });
+    ctx2.current.canvas.width = w * ratio;
+    ctx2.current.canvas.height = h * ratio;
+    ctx2.current.lineWidth = 30 * ratio;
 
-    ctx.current.drawImage(image, 0, 0);
+    setContainer({width: w, height: h});
+    ctx.current.drawImage(image, 0, 0, w * ratio, h * ratio);
   };
 
   const positionCrossHairs = () => {
-    setPosition({ x: ctx.current.canvas.width / 2, y: ctx.current.canvas.height / 2 });
+    setPosition({x: ctx.current.canvas.width / (2 * ratio), y: ctx.current.canvas.height / (2 * ratio)});
   };
-
+  
   const updateCrossHairs = (newPosition) => {
     setPosition(newPosition);
   };
@@ -68,7 +75,7 @@ const CanvasScrutinizer = () => {
     // Create clipping mask
     ctx2.current.save();
     ctx2.current.beginPath();
-    ctx2.current.arc(position.x, position.y, radius, 0, 2 * Math.PI);
+    ctx2.current.arc(position.x * ratio, position.y * ratio, radius * ratio, 0, 2 * Math.PI);
     ctx2.current.strokeStyle = '#fff8';
     ctx2.current.stroke();
     ctx2.current.clip();
@@ -79,14 +86,14 @@ const CanvasScrutinizer = () => {
 
     ctx2.current.drawImage(
       ctx.current.canvas,
-      position.x - r / 2,
-      position.y - r / 2,
-      r,
-      r,
-      position.x - radius,
-      position.y - radius,  
-      2 * radius,
-      2 * radius
+      (position.x - r / 2) * ratio,
+      (position.y - r / 2) * ratio,
+      r * ratio,
+      r * ratio,
+      (position.x - radius) * ratio,
+      (position.y - radius) * ratio,  
+      2 * radius * ratio,
+      2 * radius * ratio
     );
 
     // Undo clipping
@@ -97,12 +104,14 @@ const CanvasScrutinizer = () => {
     <div className="container">
       <canvas className="canvas_original" ref={canvasOrig}></canvas>
       <canvas className="canvas_magnification" ref={canvasMag}></canvas>
-      {position.x !== 0 && position.y !== 0 && <CrossHairs
-        position={position}
+      <CrossHairs
+        position={position} 
         radius={radius}
         container={container}
         update={updateCrossHairs}
-      />}
+        selecting={selecting}
+        setSelecting={setSelecting}
+      />
     </div>
   );
 };

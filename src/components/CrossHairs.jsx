@@ -1,27 +1,54 @@
 import { motion } from 'framer-motion';
 import './CrossHairs.css';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-const CrossHairs = ({ position, radius, container, update}) => {
+const CrossHairs = ({ position, radius, container, update, selecting, setSelecting}) => {
+  const [startPosition, setStartPosition] = useState({...position});
+
+  const handleSetStartPosition = () => setStartPosition({...position});
+
   const handlePan = (event, info) => {
-    const deltaX = (position.x + info.delta.x >= 6 && position.x + info.delta.x <= container.width - 6) ? info.delta.x : 0;
-    const deltaY = (position.y + info.delta.y >= 6 && position.y + info.delta.y <= container.height - 6) ? info.delta.y : 0;
+    event.preventDefault();
 
-    if (deltaX || deltaY) {
-      update({x: position.x + deltaX, y:position.y + deltaY});
+    const offsetX = startPosition.x + info.offset.x;
+    const offsetY = startPosition.y + info.offset.y;
+
+    if (offsetX >= 6 && offsetX <= container.width - 6 && offsetY >= 6 && offsetY <= container.height - 6) {
+      update({x: offsetX, y: offsetY});
     }
+  };
+  
+  const handleMouseMove = ({nativeEvent: event}) => {
+    if (event.layerX >= 6 && event.layerX <= container.width - 6 && event.layerY >= 6 && event.layerY <= container.height - 6) {
+      update({x: event.layerX, y: event.layerY});
+    }
+  };
+
+  const handleClick = ({nativeEvent: event}) => {
+    console.log(event);
+
+    if (!selecting) {
+      update({x: event.layerX, y: event.layerY});
+    }
+
+    setSelecting(!selecting);
   };
 
   return (
     <svg
-      className="crosshairs"
+      onMouseMove={selecting ? handleMouseMove : null}
+      onClick={handleClick}
+      className={"crosshairs" + (selecting ? ' selecting' : '')}
       viewBox={`0 0 ${container.width} ${container.height}`}
-      >
+    >
       <motion.circle
         cx="0"
         cy="0"
         fill="none"
         strokeWidth="20"
         r={radius * 1.25}
+        onPanStart={handleSetStartPosition}
+        onPanEnd={handleSetStartPosition}
         onPan={handlePan}
         style={{transform: `translateX(${position.x}px) translateY(${position.y}px)`}}
       />
