@@ -8,8 +8,6 @@ const CrossHairs = ({ position, radius, container, update, selecting, setSelecti
   const handleSetStartPosition = () => setStartPosition({...position});
 
   const handlePan = (event, info) => {
-    event.preventDefault();
-
     const offsetX = startPosition.x + info.offset.x;
     const offsetY = startPosition.y + info.offset.y;
 
@@ -25,8 +23,6 @@ const CrossHairs = ({ position, radius, container, update, selecting, setSelecti
   };
 
   const handleClick = ({nativeEvent: event}) => {
-    console.log(event);
-
     if (!selecting) {
       update({x: event.layerX, y: event.layerY});
     }
