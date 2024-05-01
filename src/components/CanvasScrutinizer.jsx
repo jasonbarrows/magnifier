@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import CrossHairs from './CrossHairs';
-import hazel from '../assets/image.jpg';
+import imageSrc from '../assets/image.jpg';
 import './CanvasScrutinizer.css';
 
 const ratio = window.devicePixelRatio;
@@ -8,9 +7,9 @@ const ratio = window.devicePixelRatio;
 const CanvasScrutinizer = () => {
   const canvasOrig = useRef(null);
   const canvasMag = useRef(null);
-  const ctx = useRef(null); // Contains source image
-  const ctx2 = useRef(null); // Displays the magnified image and glass edge/casing
-  const magnification = useRef(5); //2.04,
+  const ctx = useRef(null);  // Contains source image
+  const ctx2 = useRef(null);  // Displays the magnified image and loupe casing
+  const magnification = useRef(5);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [container, setContainer] = useState({ width: 0, height: 0 });
   const [radius, setRadius] = useState(30);
@@ -22,17 +21,17 @@ const CanvasScrutinizer = () => {
 
     let image = new Image();
 
-    const cb = () => {
+    const loadCallback = () => {
         initCanvasses(image);
         positionCrossHairs();
     };
 
-    image.addEventListener('load', cb);
+    image.addEventListener('load', loadCallback);
 
-    image.src = hazel;
+    image.src = imageSrc;
 
     return () => {
-      image.removeEventListener('load', cb);
+      image.removeEventListener('load', loadCallback);
     };
   }, []);
 
@@ -100,18 +99,29 @@ const CanvasScrutinizer = () => {
     ctx2.current.restore();
   };
 
+  const handleMouseMove = ({nativeEvent: event}) => {
+    if (event.layerX >= 6 && event.layerX <= container.width - 6 && event.layerY >= 6 && event.layerY <= container.height - 6) {
+      updateCrossHairs({x: event.layerX, y: event.layerY});
+    }
+  };
+
+  const handleClick = ({nativeEvent: event}) => {
+    if (!selecting) {
+      updateCrossHairs({x: event.layerX, y: event.layerY});
+    }
+
+    setSelecting(!selecting);
+  };
+
   return (
     <div className="container">
       <canvas className="canvas_original" ref={canvasOrig}></canvas>
-      <canvas className="canvas_magnification" ref={canvasMag}></canvas>
-      <CrossHairs
-        position={position} 
-        radius={radius}
-        container={container}
-        update={updateCrossHairs}
-        selecting={selecting}
-        setSelecting={setSelecting}
-      />
+      <canvas
+        className={"canvas_magnification" + (selecting ? ' selecting' : '')}
+        ref={canvasMag}
+        onClick={handleClick}
+        onMouseMove={selecting ? handleMouseMove : null}
+      ></canvas>
     </div>
   );
 };
