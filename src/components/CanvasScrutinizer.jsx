@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import imageSrc from '../assets/image.jpg';
 import './CanvasScrutinizer.css';
 
@@ -7,10 +7,12 @@ const ratio = window.devicePixelRatio;
 const CanvasScrutinizer = () => {
   const canvasOrig = useRef(null);
   const canvasMag = useRef(null);
+  const annotationRef = useRef(null);
   const ctx = useRef(null);  // Contains source image
   const ctx2 = useRef(null);  // Displays the magnified image and loupe casing
   const magnification = useRef(5);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [annotationPosition, setAnnotationPosition] = useState({ x: 0, y: 0 });
   const [container, setContainer] = useState({ width: 0, height: 0 });
   const [radius, setRadius] = useState(30);
   const [selecting, setSelecting] = useState(true);
@@ -53,7 +55,7 @@ const CanvasScrutinizer = () => {
 
     ctx2.current.canvas.width = w * ratio;
     ctx2.current.canvas.height = h * ratio;
-    ctx2.current.lineWidth = 30 * ratio;
+    ctx2.current.lineWidth = 16 * ratio;
 
     setContainer({width: w, height: h});
     ctx.current.drawImage(image, 0, 0, w * ratio, h * ratio);
@@ -65,6 +67,15 @@ const CanvasScrutinizer = () => {
   
   const updateCrossHairs = (newPosition) => {
     setPosition(newPosition);
+
+    let annotationX = newPosition.x - 42;
+    let annotationY = newPosition.y + 48;
+    
+    if (newPosition.x < 48) annotationX = 6;
+    if (newPosition.x > container.width - 48) annotationX = container.width - 90;
+    if (newPosition.y > container.height - 120) annotationY = annotationY - 160;
+    
+    setAnnotationPosition({x: annotationX, y: annotationY});
   };
 
   const drawMagnified = () => {
@@ -90,7 +101,7 @@ const CanvasScrutinizer = () => {
       r * ratio,
       r * ratio,
       (position.x - radius) * ratio,
-      (position.y - radius) * ratio,  
+      (position.y - radius) * ratio,
       2 * radius * ratio,
       2 * radius * ratio
     );
@@ -122,6 +133,20 @@ const CanvasScrutinizer = () => {
         onClick={handleClick}
         onMouseMove={selecting ? handleMouseMove : null}
       ></canvas>
+      <div className="annotation" ref={annotationRef} style={{transform: `translateX(${annotationPosition.x}px) translateY(${annotationPosition.y}px)`}}>
+        <div>
+          <span>Min</span>
+          <span><strong>8</strong>ºC</span>
+        </div>
+        <div>
+          <span>Max</span>
+          <span><strong>60</strong>ºC</span>
+        </div>
+        <div>
+          <span>Avg</span>
+          <span><strong>35</strong>ºC</span>
+        </div>
+      </div>
     </div>
   );
 };
