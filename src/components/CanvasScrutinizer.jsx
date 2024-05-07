@@ -63,20 +63,6 @@ const CanvasScrutinizer = () => {
     image.addEventListener('load', () => {
       setImageAbs(imageAbs);
     }, { once: true });
-
-    // const loadCallback = (asd) => {
-    //   console.log(asd);
-    //   initCanvasses();
-    //   positionCrossHairs();
-    // };
-
-    // imageRef.current.addEventListener('load', loadCallback);
-
-    // imageRef.current.src = imageSrcCol;
-
-    // return () => {
-    //   imageRef.current.removeEventListener('load', loadCallback);
-    // };
   }, []);
 
   useEffect(() => {
@@ -101,54 +87,49 @@ const CanvasScrutinizer = () => {
     }
   }, [imageAbs]);
 
-  const minMaxAvg = (arr) => {
-    let min = arr[0];
-    let max = arr[0];
-    let sum = arr[0];
+  const calculateCircularRedValueStats = () => {
+    const origRadius = radius / 5 * devicePixelRatio;
+    const diameter = origRadius * 2;
 
-    for (let i = 1; i < arr.length; i++) {
-      if (arr[i] < min) min = arr[i];
-      if (arr[i] > max) max = arr[i];
-      sum += arr[i];
+    const imageData = ctx3.current.getImageData(position.x * devicePixelRatio - origRadius, position.y * devicePixelRatio - origRadius, diameter, diameter).data;
+    const centerPixelIndex = origRadius * diameter * 4 + origRadius * 4;
+
+    let min = imageData[0];
+    let max = imageData[0];
+    let sum = imageData[0];
+    let count = 0;
+
+    for (let y = 0; y < diameter; y++) {
+      for (let x = 0; x < diameter; x++) {
+        const dx = x - origRadius;
+        const dy = y - origRadius;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance <= origRadius) {
+          count++;
+          const index = (y * diameter + x) * 4;
+          const value = imageData[index];
+
+          if (value < min) min = value;
+          if (value > max) max = value;
+          sum += value;
+        }
+      }
     }
 
-    return [min, max, sum / arr.length];
+    return {
+      px: Math.floor((imageData[centerPixelIndex] * 0.64) - 35),
+      min: Math.floor((min * 0.64) - 35),
+      max: Math.floor((max * 0.64) - 35),
+      avg: Math.floor(((sum / count) * 0.64) - 35),
+    };
   };
 
   useEffect(() => {
     drawMagnified();
 
     if (imageAbs) {
-      const origRadius = radius / 5 * devicePixelRatio;
-      const diameter = origRadius * 2;
-
-      const pixels = ctx3.current.getImageData(position.x * devicePixelRatio - origRadius, position.y * devicePixelRatio - origRadius, diameter, diameter).data;
-      const centerPixelIndex = origRadius * diameter * 4 + origRadius * 4;
-
-      const results = [];
-
-      for (let y = 0; y < diameter; y++) {
-        for (let x = 0; x < diameter; x++) {
-          const dx = x - origRadius;
-          const dy = y - origRadius;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          if (distance <= origRadius) {
-            const index = (y * diameter + x) * 4;
-            const value = pixels[index];
-            results.push(value);
-          }
-        }
-      }
-
-      const [min, max, avg] = minMaxAvg(results);
-      
-      setTemps({
-        px: Math.floor((pixels[centerPixelIndex] * 0.64) - 35),
-        min: Math.floor((min * 0.64) - 35),
-        max: Math.floor((max * 0.64) - 35),
-        avg: Math.floor((avg * 0.64) - 35),
-      });
+      setTemps(calculateCircularRedValueStats());
     }
   }, [position]);
 
