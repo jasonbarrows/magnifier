@@ -16,7 +16,7 @@ const CanvasScrutinizer = () => {
   const [image, setImage] = useState(null);
   const [imageAbs, setImageAbs] = useState(null);
   const [devicePixelRatio, setDevicePixelRatio] = useState(window.devicePixelRatio);
-  const [position, setPosition] = useState({x: 0, y: 0});
+  const [position, setPosition] = useState(null);
   const [annotationPosition, setAnnotationPosition] = useState({x: 0, y: 0});
   const [container, setContainer] = useState({width: 0, height: 0});
   const [radius, setRadius] = useState(30);
@@ -47,7 +47,7 @@ const CanvasScrutinizer = () => {
   useEffect(() => {
     ctx.current = canvasOrig.current.getContext('2d');
     ctx2.current = canvasMag.current.getContext('2d');
-    ctx3.current = canvasAbs.current.getContext('2d');
+    ctx3.current = canvasAbs.current.getContext('2d', { willReadFrequently: true });
     
     const image = new Image();
     image.src = imageSrcCol;
@@ -83,7 +83,10 @@ const CanvasScrutinizer = () => {
   useEffect(() => {
     if (imageAbs) {
       ctx3.current.drawImage(imageAbs, 0, 0, container.width * devicePixelRatio, container.height * devicePixelRatio);
-      positionCrossHairs();
+      
+      if (!position) {
+        positionCrossHairs();
+      }
     }
   }, [imageAbs]);
 
@@ -168,36 +171,38 @@ const CanvasScrutinizer = () => {
   };
   
   const drawMagnified = () => {
-    // Wipe canvas clean
-    ctx2.current.clearRect(0, 0, ctx2.current.canvas.width, ctx2.current.canvas.height);
+    if (position) {
+      // Wipe canvas clean
+      ctx2.current.clearRect(0, 0, ctx2.current.canvas.width, ctx2.current.canvas.height);
 
-    // Create clipping mask
-    ctx2.current.save();
-    ctx2.current.beginPath();
-    ctx2.current.arc(position.x * devicePixelRatio, position.y * devicePixelRatio, radius * devicePixelRatio, 0, 2 * Math.PI);
-    ctx2.current.strokeStyle = '#fff8';
-    ctx2.current.lineWidth = 16 * devicePixelRatio;
-    ctx2.current.stroke();
-    ctx2.current.clip();
+      // Create clipping mask
+      ctx2.current.save();
+      ctx2.current.beginPath();
+      ctx2.current.arc(position.x * devicePixelRatio, position.y * devicePixelRatio, radius * devicePixelRatio, 0, 2 * Math.PI);
+      ctx2.current.strokeStyle = '#fff8';
+      ctx2.current.lineWidth = 16 * devicePixelRatio;
+      ctx2.current.stroke();
+      ctx2.current.clip();
 
-    // Draw magnified fragment
-    let size = radius * 2;
-    let r = size / magnification.current;
+      // Draw magnified fragment
+      let size = radius * 2;
+      let r = size / magnification.current;
 
-    ctx2.current.drawImage(
-      displayRawImage ? ctx3.current.canvas : ctx.current.canvas,
-      (position.x - r / 2) * devicePixelRatio,
-      (position.y - r / 2) * devicePixelRatio,
-      r * devicePixelRatio,
-      r * devicePixelRatio,
-      (position.x - radius) * devicePixelRatio,
-      (position.y - radius) * devicePixelRatio,
-      2 * radius * devicePixelRatio,
-      2 * radius * devicePixelRatio
-    );
+      ctx2.current.drawImage(
+        displayRawImage ? ctx3.current.canvas : ctx.current.canvas,
+        (position.x - r / 2) * devicePixelRatio,
+        (position.y - r / 2) * devicePixelRatio,
+        r * devicePixelRatio,
+        r * devicePixelRatio,
+        (position.x - radius) * devicePixelRatio,
+        (position.y - radius) * devicePixelRatio,
+        2 * radius * devicePixelRatio,
+        2 * radius * devicePixelRatio
+      );
 
-    // Undo clipping
-    ctx2.current.restore();
+      // Undo clipping
+      ctx2.current.restore();
+    }
   };
 
   const handleMouseMove = ({nativeEvent: event}) => {
